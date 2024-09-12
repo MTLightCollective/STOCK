@@ -1,0 +1,105 @@
+# File: styles.css
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+}
+
+#stockList {
+    margin-bottom: 20px;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#generateReport {
+    display: block;
+    width: 200px;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+#generateReport:hover {
+    background-color: #45a049;
+}
+
+#report {
+    margin-top: 20px;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+# File: .gitignore
+
+# Ignore configuration files that may contain sensitive information
+config.js
+
+# Ignore node_modules directory
+node_modules/
+
+# Ignore log files
+*.log
+
+# Ignore .DS_Store files on macOS
+.DS_Store
+
+# Ignore .env files which might contain environment variables
+.env
+
+# Ignore any local development files
+*.local
+
+# Ignore IDE and editor folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore build output directories
+/dist
+/build
+
+# Ignore coverage directory used by tools like istanbul
+coverage
+
+# Ignore temporary files
+*.tmp
+*.temp

@@ -10,10 +10,10 @@ async function fetchStockData(symbol) {
     try {
         const response = await axios.get(url);
         console.log(`Response for ${symbol}:`, response.data);
-        if (response.data && Object.keys(response.data).length > 0) {
+        if (response.data && Object.keys(response.data).length > 0 && !response.data.hasOwnProperty('Note')) {
             return response.data;
         } else {
-            console.error(`No data returned for ${symbol}`);
+            console.error(`No valid data returned for ${symbol}`, response.data);
             return null;
         }
     } catch (error) {
@@ -24,16 +24,22 @@ async function fetchStockData(symbol) {
 
 // Function to generate recommendations
 function generateRecommendation(stockData) {
+    if (!stockData) return 'Data Unavailable';
+    
     const pegRatio = parseFloat(stockData.PEGRatio);
     const psRatio = parseFloat(stockData.PriceToSalesRatioTTM);
     const dividendYield = parseFloat(stockData.DividendYield) * 100;
     const debtToEquity = parseFloat(stockData.DebtToEquityRatio);
     const operatingMargin = parseFloat(stockData.OperatingMarginTTM) * 100;
 
-    if (pegRatio < 1 && psRatio < 5 && dividendYield > 2 && debtToEquity < 1 && operatingMargin > 15) {
-        return 'Buy';
+    if (!isNaN(pegRatio) && !isNaN(psRatio) && !isNaN(dividendYield) && !isNaN(debtToEquity) && !isNaN(operatingMargin)) {
+        if (pegRatio < 1 && psRatio < 5 && dividendYield > 2 && debtToEquity < 1 && operatingMargin > 15) {
+            return 'Buy';
+        } else {
+            return 'Hold';
+        }
     } else {
-        return 'Hold';
+        return 'Insufficient Data';
     }
 }
 
@@ -51,33 +57,22 @@ async function generateReport() {
     const reportData = [];
 
     for (const symbol of allStocks) {
+        reportDiv.innerHTML = `<h2>Generating report... (${symbol})</h2>`;
         const stockData = await fetchStockData(symbol);
-        if (stockData && stockData.Symbol) {
-            const recommendation = generateRecommendation(stockData);
-            reportData.push({
-                name: stockData.Name || symbol,
-                symbol: symbol,
-                peRatio: stockData.PERatio || 'N/A',
-                pegRatio: stockData.PEGRatio || 'N/A',
-                psRatio: stockData.PriceToSalesRatioTTM || 'N/A',
-                dividendYield: stockData.DividendYield ? (parseFloat(stockData.DividendYield) * 100).toFixed(2) + '%' : 'N/A',
-                debtToEquity: stockData.DebtToEquityRatio || 'N/A',
-                operatingMargin: stockData.OperatingMarginTTM ? (parseFloat(stockData.OperatingMarginTTM) * 100).toFixed(2) + '%' : 'N/A',
-                recommendation: recommendation
-            });
-        } else {
-            reportData.push({
-                name: symbol,
-                symbol: symbol,
-                peRatio: 'N/A',
-                pegRatio: 'N/A',
-                psRatio: 'N/A',
-                dividendYield: 'N/A',
-                debtToEquity: 'N/A',
-                operatingMargin: 'N/A',
-                recommendation: 'Data Unavailable'
-            });
-        }
+        const recommendation = generateRecommendation(stockData);
+        
+        reportData.push({
+            name: stockData?.Name || symbol,
+            symbol: symbol,
+            peRatio: stockData?.PERatio || 'N/A',
+            pegRatio: stockData?.PEGRatio || 'N/A',
+            psRatio: stockData?.PriceToSalesRatioTTM || 'N/A',
+            dividendYield: stockData?.DividendYield ? (parseFloat(stockData.DividendYield) * 100).toFixed(2) + '%' : 'N/A',
+            debtToEquity: stockData?.DebtToEquityRatio || 'N/A',
+            operatingMargin: stockData?.OperatingMarginTTM ? (parseFloat(stockData.OperatingMarginTTM) * 100).toFixed(2) + '%' : 'N/A',
+            recommendation: recommendation
+        });
+
         await delay(12000); // Wait for 12 seconds between requests to avoid hitting API rate limits
     }
 

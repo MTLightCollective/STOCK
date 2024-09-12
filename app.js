@@ -4,7 +4,7 @@ const canadianStocks = ['ATD.TO', 'SU.TO', 'MFC.TO', 'NTR.TO', 'POW.TO', 'SLF.TO
 
 // Function to fetch stock data
 async function fetchStockData(symbol) {
-    const apiKey = 'YOUR_API_KEY'; // Replace with your actual API key
+    const apiKey = config.alphavantageApiKey;
     const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${apiKey}`;
     
     try {

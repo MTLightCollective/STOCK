@@ -6,6 +6,7 @@
     <title>Stock Analysis Report Generator</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/yahoofinancejs@1.4.1/dist/yahoofinance.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -13,13 +14,13 @@
         <div id="stockList">
             <!-- Stock list will be populated here -->
         </div>
-        <button id="generateReport">Generate Report</button>
+        <button id="generateReport">Generate Report (Alpha Vantage)</button>
+        <button id="generateYahooReport">Generate Report (Yahoo Finance)</button>
         <div id="report">
             <!-- Generated report will be displayed here -->
         </div>
     </div>
     <script src="config.js"></script>
     <script src="app.js"></script>
-    <button id="clearCache">Clear Cached Data</button>
 </body>
 </html>

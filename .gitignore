@@ -1,0 +1,62 @@
+# Ignore configuration files that may contain sensitive information
+config.js
+
+# Ignore node modules
+node_modules/
+
+# Ignore logs
+*.log
+
+# Ignore .DS_Store files on macOS
+.DS_Store
+
+# Ignore .env files which might contain environment variables
+.env
+
+# Ignore any files with .local extension
+*.local
+
+# Ignore IDE and editor folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore build output directories
+/dist
+/build
+
+# Ignore coverage directory used by tools like istanbul
+coverage
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore OS generated files
+ehthumbs.db
+Thumbs.db
+
+# Ignore package-lock.json for projects using npm
+package-lock.json
+
+# Ignore yarn.lock for projects using Yarn
+yarn.lock
+
+# Ignore .sass-cache directory
+.sass-cache/
+
+# Ignore compiled Python files
+*.pyc
+__pycache__/
+
+# Ignore JetBrains IDE settings
+*.iml
+
+# Ignore Windows folder config file
+Desktop.ini

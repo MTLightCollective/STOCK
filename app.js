@@ -42,6 +42,7 @@ async function fetchStockData(symbol) {
 }
 
 // Function to fetch stock data from Yahoo Finance API
+// Function to fetch stock data from Yahoo Finance API
 async function fetchYahooStockData(symbol) {
     console.log(`Attempting to fetch Yahoo Finance data for ${symbol}`);
 
@@ -56,10 +57,16 @@ async function fetchYahooStockData(symbol) {
         }
     }
 
-    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=financialData,defaultKeyStatistics,summaryDetail`;
+    const yahooUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=financialData,defaultKeyStatistics,summaryDetail`;
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const url = proxyUrl + yahooUrl;
 
     try {
-        const response = await axios.get(url);
+        const response = await axios.get(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
         const stockData = response.data.quoteSummary.result[0];
         console.log(`Yahoo Finance data for ${symbol}:`, stockData);
         

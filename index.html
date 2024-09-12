@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Analysis Report Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+        h1 { color: #333; }
+        #stockList { margin-bottom: 20px; }
+        #generateReport { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        #report { margin-top: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Stock Analysis Report Generator</h1>
+    <div id="stockList">
+        <!-- Stock list will be populated here -->
+    </div>
+    <button id="generateReport">Generate Report</button>
+    <div id="report">
+        <!-- Generated report will be displayed here -->
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

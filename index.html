@@ -4,18 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Analysis Report Generator</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
-    <h1>Stock Analysis Report Generator</h1>
-    <div id="stockList">
-        <!-- Stock list will be populated here -->
-    </div>
-    <button id="generateReport">Generate Report</button>
-    <div id="report">
-        <!-- Generated report will be displayed here -->
+    <div class="container">
+        <h1>Stock Analyst</h1>
+        <div id="stockList">
+            <!-- Stock list will be populated here -->
+        </div>
+        <button id="generateReport">Generate Report</button>
+        <div id="report">
+            <!-- Generated report will be displayed here -->
+        </div>
     </div>
     <script src="config.js"></script>
     <script src="app.js"></script>

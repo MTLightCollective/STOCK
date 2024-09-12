@@ -9,7 +9,13 @@ async function fetchStockData(symbol) {
     
     try {
         const response = await axios.get(url);
-        return response.data;
+        console.log(`Response for ${symbol}:`, response.data);
+        if (response.data && Object.keys(response.data).length > 0) {
+            return response.data;
+        } else {
+            console.error(`No data returned for ${symbol}`);
+            return null;
+        }
     } catch (error) {
         console.error(`Error fetching data for ${symbol}:`, error);
         return null;
@@ -31,6 +37,11 @@ function generateRecommendation(stockData) {
     }
 }
 
+// Function to delay execution
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Function to generate the report
 async function generateReport() {
     const reportDiv = document.getElementById('report');
@@ -41,40 +52,54 @@ async function generateReport() {
 
     for (const symbol of allStocks) {
         const stockData = await fetchStockData(symbol);
-        if (stockData) {
+        if (stockData && stockData.Symbol) {
             const recommendation = generateRecommendation(stockData);
             reportData.push({
-                name: stockData.Name,
-                peRatio: stockData.PERatio,
-                pegRatio: stockData.PEGRatio,
-                psRatio: stockData.PriceToSalesRatioTTM,
-                dividendYield: (parseFloat(stockData.DividendYield) * 100).toFixed(2) + '%',
-                debtToEquity: stockData.DebtToEquityRatio,
-                operatingMargin: (parseFloat(stockData.OperatingMarginTTM) * 100).toFixed(2) + '%',
+                name: stockData.Name || symbol,
+                symbol: symbol,
+                peRatio: stockData.PERatio || 'N/A',
+                pegRatio: stockData.PEGRatio || 'N/A',
+                psRatio: stockData.PriceToSalesRatioTTM || 'N/A',
+                dividendYield: stockData.DividendYield ? (parseFloat(stockData.DividendYield) * 100).toFixed(2) + '%' : 'N/A',
+                debtToEquity: stockData.DebtToEquityRatio || 'N/A',
+                operatingMargin: stockData.OperatingMarginTTM ? (parseFloat(stockData.OperatingMarginTTM) * 100).toFixed(2) + '%' : 'N/A',
                 recommendation: recommendation
             });
+        } else {
+            reportData.push({
+                name: symbol,
+                symbol: symbol,
+                peRatio: 'N/A',
+                pegRatio: 'N/A',
+                psRatio: 'N/A',
+                dividendYield: 'N/A',
+                debtToEquity: 'N/A',
+                operatingMargin: 'N/A',
+                recommendation: 'Data Unavailable'
+            });
         }
+        await delay(12000); // Wait for 12 seconds between requests to avoid hitting API rate limits
     }
 
     // Generate table HTML
     let tableHtml = `
         <table>
             <tr>
-                <th>Stock Name</th>
-                <th>P/E Ratio</th>
-                <th>PEG Ratio</th>
-                <th>P/S Ratio</th>
-                <th>Dividend Yield</th>
-                <th>Debt-to-Equity</th>
-                <th>Operating Margin</th>
-                <th>Recommendation</th>
+                <th>Stock</th>
+                <th>P/E</th>
+                <th>PEG</th>
+                <th>P/S</th>
+                <th>Div Yield</th>
+                <th>Debt/Equity</th>
+                <th>Op Margin</th>
+                <th>Rec</th>
             </tr>
     `;
 
     reportData.forEach(stock => {
         tableHtml += `
             <tr>
-                <td>${stock.name}</td>
+                <td>${stock.symbol}</td>
                 <td>${stock.peRatio}</td>
                 <td>${stock.pegRatio}</td>
                 <td>${stock.psRatio}</td>
@@ -97,8 +122,8 @@ document.getElementById('generateReport').addEventListener('click', generateRepo
 // Populate stock list
 const stockListDiv = document.getElementById('stockList');
 stockListDiv.innerHTML = `
-    <h3>U.S. Stocks:</h3>
+    <h3>U.S. Stocks</h3>
     <ul>${usStocks.map(stock => `<li>${stock}</li>`).join('')}</ul>
-    <h3>Canadian Stocks:</h3>
+    <h3>Canadian Stocks</h3>
     <ul>${canadianStocks.map(stock => `<li>${stock}</li>`).join('')}</ul>
 `;

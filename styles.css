@@ -1,67 +1,134 @@
+:root {
+    --bg-color: #121212;
+    --text-color: #ffffff;
+    --primary-color: #bb86fc;
+    --secondary-color: #03dac6;
+    --surface-color: #1e1e1e;
+    --error-color: #cf6679;
+}
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
     line-height: 1.6;
     margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 20px;
-    background-color: #f4f4f4;
 }
 
 h1 {
-    color: #333;
+    color: var(--primary-color);
     text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 30px;
 }
 
 #stockList {
     margin-bottom: 20px;
-    background-color: #fff;
+    background-color: var(--surface-color);
     padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#stockList h3 {
+    color: var(--secondary-color);
+    margin-top: 0;
+}
+
+#stockList ul {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#stockList li {
+    background-color: var(--bg-color);
+    padding: 5px 10px;
     border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    font-size: 0.9rem;
 }
 
 #generateReport {
     display: block;
-    width: 200px;
+    width: 100%;
+    max-width: 300px;
     margin: 20px auto;
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    color: white;
+    padding: 15px 20px;
+    background-color: var(--primary-color);
+    color: var(--bg-color);
     border: none;
     cursor: pointer;
-    font-size: 16px;
-    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 25px;
     transition: background-color 0.3s ease;
 }
 
 #generateReport:hover {
-    background-color: #45a049;
+    background-color: var(--secondary-color);
 }
 
 #report {
     margin-top: 20px;
-    background-color: #fff;
+    background-color: var(--surface-color);
     padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
 }
 
 table {
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     width: 100%;
+    font-size: 0.9rem;
 }
 
 th, td {
-    border: 1px solid #ddd;
     padding: 12px;
     text-align: left;
+    border-bottom: 1px solid var(--bg-color);
 }
 
 th {
-    background-color: #f2f2f2;
+    background-color: var(--bg-color);
+    color: var(--primary-color);
     font-weight: bold;
+    position: sticky;
+    top: 0;
+}
+
+tr:last-child td {
+    border-bottom: none;
 }
 
 tr:nth-child(even) {
-    background-color: #f9f9f9;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+@media screen and (max-width: 768px) {
+    h1 {
+        font-size: 2rem;
+    }
+
+    #stockList li {
+        font-size: 0.8rem;
+    }
+
+    table {
+        font-size: 0.8rem;
+    }
+
+    th, td {
+        padding: 8px;
+    }
 }

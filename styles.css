@@ -1,4 +1,3 @@
-# File: styles.css
 
 body {
     font-family: Arial, sans-serif;
@@ -66,40 +65,3 @@ th {
 tr:nth-child(even) {
     background-color: #f9f9f9;
 }
-
-# File: .gitignore
-
-# Ignore configuration files that may contain sensitive information
-config.js
-
-# Ignore node_modules directory
-node_modules/
-
-# Ignore log files
-*.log
-
-# Ignore .DS_Store files on macOS
-.DS_Store
-
-# Ignore .env files which might contain environment variables
-.env
-
-# Ignore any local development files
-*.local
-
-# Ignore IDE and editor folders
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Ignore build output directories
-/dist
-/build
-
-# Ignore coverage directory used by tools like istanbul
-coverage
-
-# Ignore temporary files
-*.tmp
-*.temp

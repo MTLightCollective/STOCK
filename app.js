@@ -4,7 +4,7 @@ const canadianStocks = ['ATD.TO', 'SU.TO', 'MFC.TO', 'NTR.TO', 'POW.TO', 'SLF.TO
 
 // Function to fetch stock data from Alpha Vantage
 async function fetchStockData(symbol) {
-    console.log(`Attempting to fetch data for ${symbol}`);
+    console.log(`Attempting to fetch Alpha Vantage data for ${symbol}`);
     
     // Check if we have cached data
     const cachedData = localStorage.getItem(`av_${symbol}`);
@@ -41,7 +41,7 @@ async function fetchStockData(symbol) {
     }
 }
 
-// Function to fetch stock data from Yahoo Finance
+// Function to fetch stock data from Yahoo Finance API
 async function fetchYahooStockData(symbol) {
     console.log(`Attempting to fetch Yahoo Finance data for ${symbol}`);
 
@@ -56,20 +56,23 @@ async function fetchYahooStockData(symbol) {
         }
     }
 
+    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=financialData,defaultKeyStatistics,summaryDetail`;
+
     try {
-        const stockData = await yahooFinance.quoteSummary(symbol);
+        const response = await axios.get(url);
+        const stockData = response.data.quoteSummary.result[0];
         console.log(`Yahoo Finance data for ${symbol}:`, stockData);
         
         // Extract the relevant data from Yahoo Finance response
         const data = {
             Symbol: symbol,
-            Name: stockData.price.longName,
-            PERatio: stockData.summaryDetail.trailingPE,
-            PEGRatio: stockData.defaultKeyStatistics.pegRatio,
-            PriceToSalesRatioTTM: stockData.summaryDetail.priceToSalesTrailing12Months,
-            DividendYield: stockData.summaryDetail.dividendYield,
-            DebtToEquityRatio: stockData.financialData.debtToEquity,
-            OperatingMarginTTM: stockData.financialData.operatingMargins
+            Name: stockData.price?.shortName || symbol,
+            PERatio: stockData.summaryDetail?.trailingPE?.raw,
+            PEGRatio: stockData.defaultKeyStatistics?.pegRatio?.raw,
+            PriceToSalesRatioTTM: stockData.summaryDetail?.priceToSalesTrailing12Months?.raw,
+            DividendYield: stockData.summaryDetail?.dividendYield?.raw,
+            DebtToEquityRatio: stockData.financialData?.debtToEquity?.raw,
+            OperatingMarginTTM: stockData.financialData?.operatingMargins?.raw
         };
         
         // Cache the data

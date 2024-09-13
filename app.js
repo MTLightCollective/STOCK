@@ -1,5 +1,5 @@
-// Stock lists with names
-const usStocks = [
+// Initial stock lists
+const initialUSStocks = [
     {symbol: 'BRK-B', name: 'Berkshire Hathaway'},
     {symbol: 'V', name: 'Visa'},
     {symbol: 'JPM', name: 'JPMorgan Chase'},
@@ -11,7 +11,7 @@ const usStocks = [
     {symbol: 'HD', name: 'Home Depot'}
 ];
 
-const canadianStocks = [
+const initialCanadianStocks = [
     {symbol: 'ATD.TO', name: 'Alimentation Couche-Tard'},
     {symbol: 'SU.TO', name: 'Suncor Energy'},
     {symbol: 'MFC.TO', name: 'Manulife Financial'},
@@ -21,6 +21,12 @@ const canadianStocks = [
     {symbol: 'FFH.TO', name: 'Fairfax Financial'},
     {symbol: 'WN.TO', name: 'George Weston Limited'},
     {symbol: 'XIU.TO', name: 'iShares S&P/TSX 60 Index ETF'}
+];
+
+// Combined stock list
+let allStocks = [
+    ...initialUSStocks.map(stock => ({ ...stock, type: 'US' })),
+    ...initialCanadianStocks.map(stock => ({ ...stock, type: 'CA' }))
 ];
 
 // Function to fetch US stock data from Alpha Vantage
@@ -206,12 +212,59 @@ function createChart(symbol, data) {
     });
 }
 
+// Function to add a new stock
+function addStock(symbol) {
+    symbol = symbol.toUpperCase();
+    if (allStocks.some(stock => stock.symbol === symbol)) {
+        alert('This stock is already in the list.');
+        return;
+    }
+    const newStock = { 
+        symbol: symbol, 
+        name: symbol, // We'll use the symbol as the name initially
+        type: symbol.endsWith('.TO') ? 'CA' : 'US'
+    };
+    allStocks.push(newStock);
+    updateStockList();
+}
+
+// Function to remove a stock
+function removeStock(symbol) {
+    allStocks = allStocks.filter(stock => stock.symbol !== symbol);
+    updateStockList();
+    // Vibrate if the browser supports it
+    if (navigator.vibrate) {
+        navigator.vibrate(200);
+    }
+}
+
+// Function to update the stock list display
+function updateStockList() {
+    const stockListDiv = document.getElementById('stockList');
+    stockListDiv.innerHTML = `
+        <h3>Stocks</h3>
+        <ul>${allStocks.map(stock => `
+            <li data-symbol="${stock.symbol}">
+                ${stock.name} (${stock.symbol})
+                <span class="remove-stock">&times;</span>
+            </li>`).join('')}
+        </ul>
+    `;
+
+    // Add event listeners to remove buttons
+    document.querySelectorAll('.remove-stock').forEach(button => {
+        button.addEventListener('click', function() {
+            const symbol = this.parentElement.dataset.symbol;
+            removeStock(symbol);
+        });
+    });
+}
+
 // Function to generate the report
 async function generateReport() {
     const reportDiv = document.getElementById('report');
     reportDiv.innerHTML = '<h2>Generating report...</h2>';
 
-    const allStocks = [...usStocks, ...canadianStocks];
     const reportData = [];
 
     let apiCallsMade = 0;
@@ -237,7 +290,7 @@ async function generateReport() {
         reportDiv.innerHTML = `<h2>Generating report... (${stock.symbol})</h2>`;
         
         let stockData;
-        const isUSStock = !stock.symbol.endsWith('.TO');
+        const isUSStock = stock.type === 'US';
         
         if (isUSStock) {
             stockData = await fetchUSStockData(stock);
@@ -333,17 +386,20 @@ function displayReport(reportData, apiCallsMade) {
     reportDiv.innerHTML += `<p>Alpha Vantage API calls made: ${apiCallsMade}</p>`;
 }
 
+// Event listener for add stock button
+document.getElementById('addStockButton').addEventListener('click', function() {
+    const symbol = document.getElementById('newStockSymbol').value.trim();
+    if (symbol) {
+        addStock(symbol);
+        document.getElementById('newStockSymbol').value = ''; // Clear the input
+    }
+});
+
 // Event listener for generate report button
 document.getElementById('generateReport').addEventListener('click', generateReport);
 
-// Populate stock list
-const stockListDiv = document.getElementById('stockList');
-stockListDiv.innerHTML = `
-    <h3>U.S. Stocks</h3>
-    <ul>${usStocks.map(stock => `<li>${stock.name} (${stock.symbol})</li>`).join('')}</ul>
-    <h3>Canadian Stocks</h3>
-    <ul>${canadianStocks.map(stock => `<li>${stock.name} (${stock.symbol})</li>`).join('')}</ul>
-`;
+// Initial population of stock list
+updateStockList();
 
 // Add a button to clear the cache
 const clearCacheButton = document.createElement('button');
@@ -353,3 +409,26 @@ clearCacheButton.onclick = function() {
     alert('Cached data cleared');
 };
 document.body.appendChild(clearCacheButton);
+
+// Function to save the current stock list to localStorage
+function saveStockList() {
+    localStorage.setItem('stockList', JSON.stringify(allStocks));
+}
+
+// Function to load the stock list from localStorage
+function loadStockList() {
+    const savedStocks = localStorage.getItem('stockList');
+    if (savedStocks) {
+        allStocks = JSON.parse(savedStocks);
+        updateStockList();
+    }
+}
+
+// Save stock list whenever it's updated
+function updateStockList() {
+    // ... (existing updateStockList code) ...
+    saveStockList();
+}
+
+// Load saved stock list when the page loads
+document.addEventListener('DOMContentLoaded', loadStockList);

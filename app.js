@@ -24,16 +24,16 @@ const canadianStocks = [
 ];
 
 // Function to fetch stock data from Alpha Vantage
-async function fetchStockData(symbol) {
-    console.log(`Attempting to fetch data for ${symbol}`);
+async function fetchStockData(stock) {
+    console.log(`Attempting to fetch data for ${stock.symbol}`);
     
     // Check if we have cached data
-    const cachedData = localStorage.getItem(`av_${symbol}`);
+    const cachedData = localStorage.getItem(`av_${stock.symbol}`);
     if (cachedData) {
         const parsedData = JSON.parse(cachedData);
         // Check if the cached data is less than 24 hours old
         if (new Date().getTime() - parsedData.timestamp < 24 * 60 * 60 * 1000) {
-            console.log(`Using cached Alpha Vantage data for ${symbol}`);
+            console.log(`Using cached Alpha Vantage data for ${stock.symbol}`);
             return parsedData.data;
         }
     }
@@ -45,25 +45,27 @@ async function fetchStockData(symbol) {
     }
 
     const apiKey = config.alphavantageApiKey;
-    const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${apiKey}`;
+    const isUSStock = !stock.symbol.endsWith('.TRT');
+    const entitlement = isUSStock ? '&entitlement=delayed' : '';
+    const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${stock.symbol}${entitlement}&apikey=${apiKey}`;
     
     try {
         const response = await axios.get(url);
-        console.log(`Alpha Vantage response for ${symbol}:`, response.data);
+        console.log(`Alpha Vantage response for ${stock.symbol}:`, response.data);
         
         if (response.data && Object.keys(response.data).length > 0 && !response.data.hasOwnProperty('Note')) {
             // Cache the data with a timestamp
-            localStorage.setItem(`av_${symbol}`, JSON.stringify({
+            localStorage.setItem(`av_${stock.symbol}`, JSON.stringify({
                 data: response.data,
                 timestamp: new Date().getTime()
             }));
             return response.data;
         } else {
-            console.error(`No valid data returned from Alpha Vantage for ${symbol}`, response.data);
+            console.error(`No valid data returned from Alpha Vantage for ${stock.symbol}`, response.data);
             return null;
         }
     } catch (error) {
-        console.error(`Error fetching Alpha Vantage data for ${symbol}:`, error);
+        console.error(`Error fetching Alpha Vantage data for ${stock.symbol}:`, error);
         return null;
     }
 }
@@ -128,7 +130,7 @@ async function generateReport() {
             console.log(`Using cached Alpha Vantage data for ${stock.symbol}`);
         } else if (apiCallsMade < API_CALL_LIMIT) {
             // If no cached data and we haven't reached the API limit, fetch new data
-            stockData = await fetchStockData(stock.symbol);
+            stockData = await fetchStockData(stock);
             apiCallsMade++;
             console.log(`Alpha Vantage API call made for ${stock.symbol}. Total calls: ${apiCallsMade}`);
         } else {

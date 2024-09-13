@@ -2,50 +2,41 @@
 const usStocks = ['BRK-B', 'V', 'JPM', 'JNJ', 'PG', 'UNH', 'MA', 'PEP', 'WMT', 'HD'];
 const canadianStocks = ['ATD.TO', 'SU.TO', 'MFC.TO', 'NTR.TO', 'POW.TO', 'SLF.TO', 'FFH.TO', 'WN.TO'];
 
-// Function to fetch stock data from Financial Modeling Prep API
+// Function to fetch stock data from Alpha Vantage
 async function fetchStockData(symbol) {
-    console.log(`Attempting to fetch stock data for ${symbol}`);
-
+    console.log(`Attempting to fetch data for ${symbol}`);
+    
     // Check if we have cached data
-    const cachedData = localStorage.getItem(`fmp_${symbol}`);
+    const cachedData = localStorage.getItem(`av_${symbol}`);
     if (cachedData) {
         const parsedData = JSON.parse(cachedData);
         // Check if the cached data is less than 24 hours old
         if (new Date().getTime() - parsedData.timestamp < 24 * 60 * 60 * 1000) {
-            console.log(`Using cached data for ${symbol}`);
+            console.log(`Using cached Alpha Vantage data for ${symbol}`);
             return parsedData.data;
         }
     }
 
-    const apiKey = config.fmpApiKey; // Make sure to add this to your config.js file
-    const url = `https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${apiKey}`;
-
+    const apiKey = config.alphavantageApiKey;
+    const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${apiKey}`;
+    
     try {
         const response = await axios.get(url);
-        const stockData = response.data[0];
-        console.log(`Stock data for ${symbol}:`, stockData);
+        console.log(`Alpha Vantage response for ${symbol}:`, response.data);
         
-        // Extract the relevant data from the API response
-        const data = {
-            Symbol: symbol,
-            Name: stockData.companyName,
-            PERatio: stockData.pe,
-            PEGRatio: stockData.peg,
-            PriceToSalesRatioTTM: stockData.priceToSalesRatio,
-            DividendYield: stockData.lastDividendYield,
-            DebtToEquityRatio: stockData.debtToEquity,
-            OperatingMarginTTM: stockData.operatingMargin
-        };
-        
-        // Cache the data
-        localStorage.setItem(`fmp_${symbol}`, JSON.stringify({
-            data: data,
-            timestamp: new Date().getTime()
-        }));
-        
-        return data;
+        if (response.data && Object.keys(response.data).length > 0 && !response.data.hasOwnProperty('Note')) {
+            // Cache the data with a timestamp
+            localStorage.setItem(`av_${symbol}`, JSON.stringify({
+                data: response.data,
+                timestamp: new Date().getTime()
+            }));
+            return response.data;
+        } else {
+            console.error(`No valid data returned from Alpha Vantage for ${symbol}`, response.data);
+            return null;
+        }
     } catch (error) {
-        console.error(`Error fetching stock data for ${symbol}:`, error);
+        console.error(`Error fetching Alpha Vantage data for ${symbol}:`, error);
         return null;
     }
 }
@@ -79,10 +70,27 @@ async function generateReport() {
     const allStocks = [...usStocks, ...canadianStocks];
     const reportData = [];
 
+    let apiCallsMade = 0;
+    const API_CALL_LIMIT = 25;
+
     for (const symbol of allStocks) {
         reportDiv.innerHTML = `<h2>Generating report... (${symbol})</h2>`;
         
-        const stockData = await fetchStockData(symbol);
+        let stockData;
+        
+        // Check if we have cached data
+        const cachedData = localStorage.getItem(`av_${symbol}`);
+        if (cachedData) {
+            stockData = JSON.parse(cachedData).data;
+            console.log(`Using cached Alpha Vantage data for ${symbol}`);
+        } else if (apiCallsMade < API_CALL_LIMIT) {
+            // If no cached data and we haven't reached the API limit, fetch new data
+            stockData = await fetchStockData(symbol);
+            apiCallsMade++;
+            console.log(`Alpha Vantage API call made for ${symbol}. Total calls: ${apiCallsMade}`);
+        } else {
+            console.log(`Alpha Vantage API call limit reached. Skipping data fetch for ${symbol}`);
+        }
         
         if (stockData) {
             const recommendation = generateRecommendation(stockData);
@@ -90,12 +98,12 @@ async function generateReport() {
             reportData.push({
                 name: stockData.Name || symbol,
                 symbol: symbol,
-                peRatio: stockData.PERatio?.toFixed(2) || 'N/A',
-                pegRatio: stockData.PEGRatio?.toFixed(2) || 'N/A',
-                psRatio: stockData.PriceToSalesRatioTTM?.toFixed(2) || 'N/A',
-                dividendYield: stockData.DividendYield ? (stockData.DividendYield * 100).toFixed(2) + '%' : 'N/A',
-                debtToEquity: stockData.DebtToEquityRatio?.toFixed(2) || 'N/A',
-                operatingMargin: stockData.OperatingMarginTTM ? (stockData.OperatingMarginTTM * 100).toFixed(2) + '%' : 'N/A',
+                peRatio: stockData.PERatio || 'N/A',
+                pegRatio: stockData.PEGRatio || 'N/A',
+                psRatio: stockData.PriceToSalesRatioTTM || 'N/A',
+                dividendYield: stockData.DividendYield ? (parseFloat(stockData.DividendYield) * 100).toFixed(2) + '%' : 'N/A',
+                debtToEquity: stockData.DebtToEquityRatio || 'N/A',
+                operatingMargin: stockData.OperatingMarginTTM ? (parseFloat(stockData.OperatingMarginTTM) * 100).toFixed(2) + '%' : 'N/A',
                 recommendation: recommendation
             });
         } else {
@@ -112,15 +120,17 @@ async function generateReport() {
             });
         }
 
-        // Small delay to avoid overwhelming the service
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Only delay if we actually made an API call
+        if (apiCallsMade > 0 && apiCallsMade < API_CALL_LIMIT) {
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay between API calls
+        }
     }
 
-    displayReport(reportData);
+    displayReport(reportData, apiCallsMade);
 }
 
 // Function to display the report
-function displayReport(reportData) {
+function displayReport(reportData, apiCallsMade) {
     let tableHtml = `
         <table>
             <tr>
@@ -154,6 +164,7 @@ function displayReport(reportData) {
 
     const reportDiv = document.getElementById('report');
     reportDiv.innerHTML = tableHtml;
+    reportDiv.innerHTML += `<p>API calls made: ${apiCallsMade}</p>`;
 }
 
 // Event listener for generate report button

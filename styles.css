@@ -28,7 +28,55 @@ h1 {
     font-size: 2.5rem;
     margin-bottom: 30px;
 }
+/* ... (keep existing styles) ... */
 
+#addStockForm {
+    margin-bottom: 20px;
+}
+
+#newStockSymbol {
+    padding: 5px;
+    font-size: 16px;
+}
+
+#addStockButton {
+    padding: 5px 10px;
+    font-size: 16px;
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+    border: none;
+    cursor: pointer;
+}
+
+#stockList ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#stockList li {
+    padding: 10px;
+    margin-bottom: 5px;
+    background-color: var(--surface-color);
+    border-radius: 5px;
+    position: relative;
+}
+
+.remove-stock {
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--error-color);
+}
+
+#stockList li:hover .remove-stock {
+    display: block;
+}
+
+/* ... (keep existing styles) ... */
 #stockList {
     margin-bottom: 20px;
     background-color: var(--surface-color);

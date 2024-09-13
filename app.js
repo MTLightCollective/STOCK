@@ -217,6 +217,22 @@ async function generateReport() {
     let apiCallsMade = 0;
     const API_CALL_LIMIT = 25;
 
+    // Helper function to safely format numbers
+    const safeNumber = (value) => {
+        if (value === null || value === undefined) return 'N/A';
+        const num = parseFloat(value);
+        if (isNaN(num)) return 'N/A';
+        return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    // Helper function to safely format percentages
+    const safePercentage = (value) => {
+        if (value === null || value === undefined) return 'N/A';
+        const num = parseFloat(value);
+        if (isNaN(num)) return 'N/A';
+        return (num * 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+    };
+
     for (const stock of allStocks) {
         reportDiv.innerHTML = `<h2>Generating report... (${stock.symbol})</h2>`;
         
@@ -232,12 +248,6 @@ async function generateReport() {
         
         if (stockData) {
             const recommendation = generateRecommendation(stockData);
-            
-            // Helper function to safely format numbers
-            const safeNumber = (value) => {
-                const num = parseFloat(value);
-                return isNaN(num) ? 'N/A' : num.toFixed(2);
-            };
 
             reportData.push({
                 name: stock.name,
@@ -245,8 +255,8 @@ async function generateReport() {
                 peRatio: safeNumber(stockData.PERatio),
                 pegRatio: safeNumber(stockData.PEGRatio),
                 psRatio: safeNumber(stockData.PriceToSalesRatioTTM),
-                dividendYield: stockData.DividendYield ? `${safeNumber(stockData.DividendYield * 100)}%` : 'N/A',
-                operatingMargin: stockData.OperatingMarginTTM ? `${safeNumber(stockData.OperatingMarginTTM * 100)}%` : 'N/A',
+                dividendYield: safePercentage(stockData.DividendYield),
+                operatingMargin: safePercentage(stockData.OperatingMarginTTM),
                 latestPrice: safeNumber(stockData.LatestPrice),
                 volume: stockData.Volume ? parseInt(stockData.Volume).toLocaleString() : 'N/A',
                 recommendation: recommendation

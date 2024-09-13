@@ -1,66 +1,59 @@
-// ... (keep the existing stock lists)
+// Stock lists with names
+const usStocks = [
+    {symbol: 'BRK-B', name: 'Berkshire Hathaway'},
+    {symbol: 'V', name: 'Visa'},
+    {symbol: 'JPM', name: 'JPMorgan Chase'},
+    {symbol: 'JNJ', name: 'Johnson & Johnson'},
+    {symbol: 'PG', name: 'Procter & Gamble'},
+    {symbol: 'UNH', name: 'UnitedHealth Group'},
+    {symbol: 'MA', name: 'Mastercard'},
+    {symbol: 'WMT', name: 'Walmart'},
+    {symbol: 'HD', name: 'Home Depot'}
+];
 
-// Function to fetch stock data from Alpha Vantage
-async function fetchStockData(stock) {
-    console.log(`Attempting to fetch data for ${stock.symbol}`);
+const canadianStocks = [
+    {symbol: 'ATD.TO', name: 'Alimentation Couche-Tard'},
+    {symbol: 'SU.TO', name: 'Suncor Energy'},
+    {symbol: 'MFC.TO', name: 'Manulife Financial'},
+    {symbol: 'NTR.TO', name: 'Nutrien'},
+    {symbol: 'POW.TO', name: 'Power Corporation of Canada'},
+    {symbol: 'SLF.TO', name: 'Sun Life Financial'},
+    {symbol: 'FFH.TO', name: 'Fairfax Financial'},
+    {symbol: 'WN.TO', name: 'George Weston Limited'},
+    {symbol: 'XIU.TO', name: 'iShares S&P/TSX 60 Index ETF'}
+];
+
+// Function to fetch US stock data from Alpha Vantage
+async function fetchUSStockData(stock) {
+    console.log(`Attempting to fetch Alpha Vantage data for ${stock.symbol}`);
     
-    // Check if we have cached data
     const cachedData = localStorage.getItem(`av_${stock.symbol}`);
     if (cachedData) {
         const parsedData = JSON.parse(cachedData);
-        // Check if the cached data is less than 24 hours old
         if (new Date().getTime() - parsedData.timestamp < 24 * 60 * 60 * 1000) {
             console.log(`Using cached Alpha Vantage data for ${stock.symbol}`);
             return parsedData.data;
         }
     }
 
-    // Check if config and API key are defined
     if (typeof config === 'undefined' || !config.alphavantageApiKey) {
         console.error('Alpha Vantage API key is not defined. Please check your config.js file.');
         return null;
     }
 
     const apiKey = config.alphavantageApiKey;
-    const isUSStock = !stock.symbol.endsWith('.TRT');
-    let url;
-    
-    if (isUSStock) {
-        url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${stock.symbol}&entitlement=delayed&apikey=${apiKey}`;
-    } else {
-        url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${stock.symbol}&apikey=${apiKey}`;
-    }
+    const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${stock.symbol}&entitlement=delayed&apikey=${apiKey}`;
     
     try {
         const response = await axios.get(url);
         console.log(`Alpha Vantage response for ${stock.symbol}:`, response.data);
         
-        let processedData;
-        
-        if (isUSStock) {
-            processedData = response.data;
-        } else {
-            // Process Canadian stock data
-            const timeSeries = response.data['Time Series (Daily)'];
-            const latestDate = Object.keys(timeSeries)[0];
-            const latestData = timeSeries[latestDate];
-            
-            processedData = {
-                Symbol: stock.symbol,
-                Name: stock.name,
-                LatestTradingDay: latestDate,
-                Close: latestData['4. close'],
-                Volume: latestData['5. volume']
-            };
-        }
-        
-        if (processedData && Object.keys(processedData).length > 0) {
-            // Cache the data with a timestamp
+        if (response.data && Object.keys(response.data).length > 0 && !response.data.hasOwnProperty('Note')) {
             localStorage.setItem(`av_${stock.symbol}`, JSON.stringify({
-                data: processedData,
+                data: response.data,
                 timestamp: new Date().getTime()
             }));
-            return processedData;
+            return response.data;
         } else {
             console.error(`No valid data returned from Alpha Vantage for ${stock.symbol}`, response.data);
             return null;
@@ -71,46 +64,84 @@ async function fetchStockData(stock) {
     }
 }
 
+// Function to fetch Canadian stock data from Yahoo Finance
+async function fetchCanadianStockData(stock) {
+    console.log(`Attempting to fetch Yahoo Finance data for ${stock.symbol}`);
+    
+    const cachedData = localStorage.getItem(`yf_${stock.symbol}`);
+    if (cachedData) {
+        const parsedData = JSON.parse(cachedData);
+        if (new Date().getTime() - parsedData.timestamp < 24 * 60 * 60 * 1000) {
+            console.log(`Using cached Yahoo Finance data for ${stock.symbol}`);
+            return parsedData.data;
+        }
+    }
+
+    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${stock.symbol}?modules=financialData,defaultKeyStatistics,summaryDetail`;
+    
+    try {
+        const response = await axios.get(url);
+        console.log(`Yahoo Finance response for ${stock.symbol}:`, response.data);
+        
+        const quoteSummary = response.data.quoteSummary.result[0];
+        const stockData = {
+            Symbol: stock.symbol,
+            Name: stock.name,
+            PERatio: quoteSummary.summaryDetail.trailingPE?.raw,
+            PEGRatio: quoteSummary.defaultKeyStatistics.pegRatio?.raw,
+            PriceToSalesRatioTTM: quoteSummary.summaryDetail.priceToSalesTrailing12Months?.raw,
+            DividendYield: quoteSummary.summaryDetail.dividendYield?.raw,
+            OperatingMarginTTM: quoteSummary.financialData.operatingMargins?.raw,
+            LatestPrice: quoteSummary.financialData.currentPrice?.raw,
+            Volume: quoteSummary.summaryDetail.volume?.raw
+        };
+
+        localStorage.setItem(`yf_${stock.symbol}`, JSON.stringify({
+            data: stockData,
+            timestamp: new Date().getTime()
+        }));
+        return stockData;
+    } catch (error) {
+        console.error(`Error fetching Yahoo Finance data for ${stock.symbol}:`, error);
+        return null;
+    }
+}
+
 // Function to generate recommendations
-function generateRecommendation(stockData, isUSStock) {
+function generateRecommendation(stockData) {
     if (!stockData) return 'Data Unavailable';
     
-    if (isUSStock) {
-        const pegRatio = parseFloat(stockData.PEGRatio);
-        const psRatio = parseFloat(stockData.PriceToSalesRatioTTM);
-        const dividendYield = parseFloat(stockData.DividendYield) * 100;
-        const operatingMargin = parseFloat(stockData.OperatingMarginTTM) * 100;
+    const pegRatio = parseFloat(stockData.PEGRatio);
+    const psRatio = parseFloat(stockData.PriceToSalesRatioTTM);
+    const dividendYield = parseFloat(stockData.DividendYield) * 100;
+    const operatingMargin = parseFloat(stockData.OperatingMarginTTM) * 100;
 
-        let buyConditions = 0;
-        let totalConditions = 0;
+    let buyConditions = 0;
+    let totalConditions = 0;
 
-        if (!isNaN(pegRatio)) {
-            totalConditions++;
-            if (pegRatio < 1) buyConditions++;
-        }
-        if (!isNaN(psRatio)) {
-            totalConditions++;
-            if (psRatio < 5) buyConditions++;
-        }
-        if (!isNaN(dividendYield)) {
-            totalConditions++;
-            if (dividendYield > 2) buyConditions++;
-        }
-        if (!isNaN(operatingMargin)) {
-            totalConditions++;
-            if (operatingMargin > 15) buyConditions++;
-        }
-
-        if (totalConditions === 0) return 'Insufficient Data';
-        
-        const buyRatio = buyConditions / totalConditions;
-        if (buyRatio >= 0.75) return 'Buy';
-        if (buyRatio >= 0.5) return 'Hold';
-        return 'Sell';
-    } else {
-        // For Canadian stocks, we don't have enough data to make a recommendation
-        return 'Insufficient Data for Recommendation';
+    if (!isNaN(pegRatio)) {
+        totalConditions++;
+        if (pegRatio < 1) buyConditions++;
     }
+    if (!isNaN(psRatio)) {
+        totalConditions++;
+        if (psRatio < 5) buyConditions++;
+    }
+    if (!isNaN(dividendYield)) {
+        totalConditions++;
+        if (dividendYield > 2) buyConditions++;
+    }
+    if (!isNaN(operatingMargin)) {
+        totalConditions++;
+        if (operatingMargin > 15) buyConditions++;
+    }
+
+    if (totalConditions === 0) return 'Insufficient Data';
+    
+    const buyRatio = buyConditions / totalConditions;
+    if (buyRatio >= 0.75) return 'Buy';
+    if (buyRatio >= 0.5) return 'Hold';
+    return 'Sell';
 }
 
 // Function to generate the report
@@ -128,47 +159,30 @@ async function generateReport() {
         reportDiv.innerHTML = `<h2>Generating report... (${stock.symbol})</h2>`;
         
         let stockData;
+        const isUSStock = !stock.symbol.endsWith('.TO');
         
-        // Check if we have cached data
-        const cachedData = localStorage.getItem(`av_${stock.symbol}`);
-        if (cachedData) {
-            stockData = JSON.parse(cachedData).data;
-            console.log(`Using cached Alpha Vantage data for ${stock.symbol}`);
-        } else if (apiCallsMade < API_CALL_LIMIT) {
-            // If no cached data and we haven't reached the API limit, fetch new data
-            stockData = await fetchStockData(stock);
+        if (isUSStock) {
+            stockData = await fetchUSStockData(stock);
             apiCallsMade++;
-            console.log(`Alpha Vantage API call made for ${stock.symbol}. Total calls: ${apiCallsMade}`);
         } else {
-            console.log(`Alpha Vantage API call limit reached. Skipping data fetch for ${stock.symbol}`);
+            stockData = await fetchCanadianStockData(stock);
         }
         
-        const isUSStock = !stock.symbol.endsWith('.TRT');
-        
         if (stockData) {
-            const recommendation = generateRecommendation(stockData, isUSStock);
+            const recommendation = generateRecommendation(stockData);
             
-            if (isUSStock) {
-                reportData.push({
-                    name: stock.name,
-                    symbol: stock.symbol,
-                    peRatio: stockData.PERatio || 'N/A',
-                    pegRatio: stockData.PEGRatio || 'N/A',
-                    psRatio: stockData.PriceToSalesRatioTTM || 'N/A',
-                    dividendYield: stockData.DividendYield ? (parseFloat(stockData.DividendYield) * 100).toFixed(2) + '%' : 'N/A',
-                    operatingMargin: stockData.OperatingMarginTTM ? (parseFloat(stockData.OperatingMarginTTM) * 100).toFixed(2) + '%' : 'N/A',
-                    recommendation: recommendation
-                });
-            } else {
-                reportData.push({
-                    name: stock.name,
-                    symbol: stock.symbol,
-                    latestTradingDay: stockData.LatestTradingDay || 'N/A',
-                    closePrice: stockData.Close || 'N/A',
-                    volume: stockData.Volume || 'N/A',
-                    recommendation: recommendation
-                });
-            }
+            reportData.push({
+                name: stock.name,
+                symbol: stock.symbol,
+                peRatio: stockData.PERatio?.toFixed(2) || 'N/A',
+                pegRatio: stockData.PEGRatio?.toFixed(2) || 'N/A',
+                psRatio: stockData.PriceToSalesRatioTTM?.toFixed(2) || 'N/A',
+                dividendYield: stockData.DividendYield ? (stockData.DividendYield * 100).toFixed(2) + '%' : 'N/A',
+                operatingMargin: stockData.OperatingMarginTTM ? (stockData.OperatingMarginTTM * 100).toFixed(2) + '%' : 'N/A',
+                latestPrice: stockData.LatestPrice?.toFixed(2) || 'N/A',
+                volume: stockData.Volume?.toLocaleString() || 'N/A',
+                recommendation: recommendation
+            });
         } else {
             reportData.push({
                 name: stock.name,
@@ -178,12 +192,14 @@ async function generateReport() {
                 psRatio: 'N/A',
                 dividendYield: 'N/A',
                 operatingMargin: 'N/A',
+                latestPrice: 'N/A',
+                volume: 'N/A',
                 recommendation: 'Data Unavailable'
             });
         }
 
-        // Only delay if we actually made an API call
-        if (apiCallsMade > 0 && apiCallsMade < API_CALL_LIMIT) {
+        // Only delay for Alpha Vantage calls
+        if (isUSStock && apiCallsMade > 0 && apiCallsMade < API_CALL_LIMIT) {
             await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay between API calls
         }
     }
@@ -193,8 +209,7 @@ async function generateReport() {
 
 // Function to display the report
 function displayReport(reportData, apiCallsMade) {
-    let usTableHtml = `
-        <h3>U.S. Stocks</h3>
+    let tableHtml = `
         <table>
             <tr>
                 <th>Name</th>
@@ -204,57 +219,53 @@ function displayReport(reportData, apiCallsMade) {
                 <th>P/S</th>
                 <th>Div Yield</th>
                 <th>Op Margin</th>
-                <th>Rec</th>
-            </tr>
-    `;
-
-    let canadianTableHtml = `
-        <h3>Canadian Stocks</h3>
-        <table>
-            <tr>
-                <th>Name</th>
-                <th>Symbol</th>
-                <th>Latest Trading Day</th>
-                <th>Close Price</th>
+                <th>Latest Price</th>
                 <th>Volume</th>
                 <th>Rec</th>
             </tr>
     `;
 
     reportData.forEach(stock => {
-        if (!stock.symbol.endsWith('.TRT')) {
-            usTableHtml += `
-                <tr>
-                    <td>${stock.name}</td>
-                    <td>${stock.symbol}</td>
-                    <td>${stock.peRatio}</td>
-                    <td>${stock.pegRatio}</td>
-                    <td>${stock.psRatio}</td>
-                    <td>${stock.dividendYield}</td>
-                    <td>${stock.operatingMargin}</td>
-                    <td>${stock.recommendation}</td>
-                </tr>
-            `;
-        } else {
-            canadianTableHtml += `
-                <tr>
-                    <td>${stock.name}</td>
-                    <td>${stock.symbol}</td>
-                    <td>${stock.latestTradingDay}</td>
-                    <td>${stock.closePrice}</td>
-                    <td>${stock.volume}</td>
-                    <td>${stock.recommendation}</td>
-                </tr>
-            `;
-        }
+        tableHtml += `
+            <tr>
+                <td>${stock.name}</td>
+                <td>${stock.symbol}</td>
+                <td>${stock.peRatio}</td>
+                <td>${stock.pegRatio}</td>
+                <td>${stock.psRatio}</td>
+                <td>${stock.dividendYield}</td>
+                <td>${stock.operatingMargin}</td>
+                <td>${stock.latestPrice}</td>
+                <td>${stock.volume}</td>
+                <td>${stock.recommendation}</td>
+            </tr>
+        `;
     });
 
-    usTableHtml += '</table>';
-    canadianTableHtml += '</table>';
+    tableHtml += '</table>';
 
     const reportDiv = document.getElementById('report');
-    reportDiv.innerHTML = usTableHtml + canadianTableHtml;
-    reportDiv.innerHTML += `<p>API calls made: ${apiCallsMade}</p>`;
+    reportDiv.innerHTML = tableHtml;
+    reportDiv.innerHTML += `<p>Alpha Vantage API calls made: ${apiCallsMade}</p>`;
 }
 
-// ... (keep the existing event listeners and stock list population code)
+// Event listener for generate report button
+document.getElementById('generateReport').addEventListener('click', generateReport);
+
+// Populate stock list
+const stockListDiv = document.getElementById('stockList');
+stockListDiv.innerHTML = `
+    <h3>U.S. Stocks</h3>
+    <ul>${usStocks.map(stock => `<li>${stock.name} (${stock.symbol})</li>`).join('')}</ul>
+    <h3>Canadian Stocks</h3>
+    <ul>${canadianStocks.map(stock => `<li>${stock.name} (${stock.symbol})</li>`).join('')}</ul>
+`;
+
+// Add a button to clear the cache
+const clearCacheButton = document.createElement('button');
+clearCacheButton.textContent = 'Clear Cached Data';
+clearCacheButton.onclick = function() {
+    localStorage.clear();
+    alert('Cached data cleared');
+};
+document.body.appendChild(clearCacheButton);

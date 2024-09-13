@@ -112,7 +112,6 @@ async function fetchCanadianStockData(stock) {
         return null;
     }
 }
-
 // Function to generate recommendations
 function generateRecommendation(stockData) {
     if (!stockData) return 'Data Unavailable';
@@ -211,7 +210,6 @@ function createChart(symbol, data) {
         }
     });
 }
-
 // Function to add a new stock
 function addStock(symbol) {
     symbol = symbol.toUpperCase();
@@ -226,12 +224,14 @@ function addStock(symbol) {
     };
     allStocks.push(newStock);
     updateStockList();
+    saveStockList();
 }
 
 // Function to remove a stock
 function removeStock(symbol) {
     allStocks = allStocks.filter(stock => stock.symbol !== symbol);
     updateStockList();
+    saveStockList();
     // Vibrate if the browser supports it
     if (navigator.vibrate) {
         navigator.vibrate(200);
@@ -385,7 +385,6 @@ function displayReport(reportData, apiCallsMade) {
     reportDiv.innerHTML = tableHtml;
     reportDiv.innerHTML += `<p>Alpha Vantage API calls made: ${apiCallsMade}</p>`;
 }
-
 // Event listener for add stock button
 document.getElementById('addStockButton').addEventListener('click', function() {
     const symbol = document.getElementById('newStockSymbol').value.trim();
@@ -397,18 +396,6 @@ document.getElementById('addStockButton').addEventListener('click', function() {
 
 // Event listener for generate report button
 document.getElementById('generateReport').addEventListener('click', generateReport);
-
-// Initial population of stock list
-updateStockList();
-
-// Add a button to clear the cache
-const clearCacheButton = document.createElement('button');
-clearCacheButton.textContent = 'Clear Cached Data';
-clearCacheButton.onclick = function() {
-    localStorage.clear();
-    alert('Cached data cleared');
-};
-document.body.appendChild(clearCacheButton);
 
 // Function to save the current stock list to localStorage
 function saveStockList() {
@@ -424,11 +411,17 @@ function loadStockList() {
     }
 }
 
-// Save stock list whenever it's updated
-function updateStockList() {
-    // ... (existing updateStockList code) ...
-    saveStockList();
-}
+// Add a button to clear the cache
+const clearCacheButton = document.createElement('button');
+clearCacheButton.textContent = 'Clear Cached Data';
+clearCacheButton.onclick = function() {
+    localStorage.clear();
+    alert('Cached data cleared');
+};
+document.body.appendChild(clearCacheButton);
 
-// Load saved stock list when the page loads
-document.addEventListener('DOMContentLoaded', loadStockList);
+// Initial setup
+document.addEventListener('DOMContentLoaded', function() {
+    loadStockList();
+    updateStockList();
+});

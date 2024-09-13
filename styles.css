@@ -28,24 +28,49 @@ h1 {
     font-size: 2.5rem;
     margin-bottom: 30px;
 }
-/* ... (keep existing styles) ... */
 
 #addStockForm {
     margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
 }
 
 #newStockSymbol {
-    padding: 5px;
+    padding: 10px;
     font-size: 16px;
+    border: 1px solid var(--primary-color);
+    border-radius: 5px 0 0 5px;
+    width: 200px;
+    background-color: var(--surface-color);
+    color: var(--text-color);
 }
 
 #addStockButton {
-    padding: 5px 10px;
+    padding: 10px 20px;
     font-size: 16px;
     background-color: var(--primary-color);
     color: var(--bg-color);
     border: none;
+    border-radius: 0 5px 5px 0;
     cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#addStockButton:hover {
+    background-color: var(--secondary-color);
+}
+
+#stockList {
+    margin-bottom: 20px;
+    background-color: var(--surface-color);
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#stockList h3 {
+    color: var(--secondary-color);
+    margin-top: 0;
 }
 
 #stockList ul {
@@ -56,7 +81,7 @@ h1 {
 #stockList li {
     padding: 10px;
     margin-bottom: 5px;
-    background-color: var(--surface-color);
+    background-color: var(--bg-color);
     border-radius: 5px;
     position: relative;
 }
@@ -76,40 +101,11 @@ h1 {
     display: block;
 }
 
-/* ... (keep existing styles) ... */
-#stockList {
-    margin-bottom: 20px;
-    background-color: var(--surface-color);
-    padding: 15px;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-#stockList h3 {
-    color: var(--secondary-color);
-    margin-top: 0;
-}
-
-#stockList ul {
-    list-style-type: none;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-#stockList li {
-    background-color: var(--bg-color);
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 0.9rem;
-}
-
-#generateReport, #generateYahooReport {
-    display: inline-block;
-    width: calc(50% - 10px);
+#generateReport {
+    display: block;
+    width: 100%;
     max-width: 300px;
-    margin: 10px 5px;
+    margin: 20px auto;
     padding: 15px 20px;
     background-color: var(--primary-color);
     color: var(--bg-color);
@@ -121,7 +117,7 @@ h1 {
     transition: background-color 0.3s ease;
 }
 
-#generateReport:hover, #generateYahooReport:hover {
+#generateReport:hover {
     background-color: var(--secondary-color);
 }
 
@@ -133,23 +129,7 @@ h1 {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     overflow-x: auto;
 }
-#charts {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    margin-top: 20px;
-}
 
-#charts canvas {
-    max-width: 45%;
-    margin-bottom: 20px;
-}
-
-@media (max-width: 768px) {
-    #charts canvas {
-        max-width: 100%;
-    }
-}
 table {
     border-collapse: separate;
     border-spacing: 0;
@@ -177,6 +157,18 @@ tr:last-child td {
 
 tr:nth-child(even) {
     background-color: rgba(255, 255, 255, 0.05);
+}
+
+#charts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+#charts canvas {
+    max-width: 45%;
+    margin-bottom: 20px;
 }
 
 #clearCache {
@@ -208,8 +200,7 @@ tr:nth-child(even) {
         padding: 8px;
     }
 
-    #generateReport, #generateYahooReport {
-        width: 100%;
-        margin: 10px 0;
+    #charts canvas {
+        max-width: 100%;
     }
 }
